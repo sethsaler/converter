@@ -1,6 +1,6 @@
 # Converter
 
-A polished macOS media converter with drag-and-drop and a smart format guesser.
+A polished macOS media converter with drag-and-drop, a smart format guesser, and a CLI.
 
 **Images** · HEIC/HEIF, JPG, PNG, WebP, GIF, BMP, TIFF, ICO, AVIF  
 **Video** · MP4, MOV, MKV, AVI, WebM, M4V, WMV, FLV…  
@@ -15,26 +15,40 @@ A polished macOS media converter with drag-and-drop and a smart format guesser.
 | Screenshot → PNG | Keep lossless |
 | Video → MP3 | Extract audio track |
 
-## Quick start
+## Install
 
 ```bash
-./run.sh
+curl -fsSL https://raw.githubusercontent.com/sethsaler/converter/main/install.sh | bash
 ```
 
-Or:
+This installs to `~/.local/share/converter`, puts `converter` on `~/.local/bin`, and (on macOS) drops a double-click launcher in `~/Applications/Converter.command`.
+
+Make sure `~/.local/bin` is on your PATH:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python main.py
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
 ```
 
 **Requirements:** Python 3.10+, [ffmpeg](https://ffmpeg.org/) (`brew install ffmpeg`) for video/audio.
 
-## How it works
+### Manual / from source
 
-### Convert mode (default)
+```bash
+git clone https://github.com/sethsaler/converter.git
+cd converter
+./run.sh          # GUI
+# or double-click Converter.command in Finder
+```
+
+## Usage
+
+### GUI
+
+```bash
+converter          # or: converter gui
+./run.sh
+# Double-click Converter.command
+```
 
 1. **Drop** files (or browse)
 2. The app **guesses** a target format using heuristics + your past choices
@@ -42,7 +56,40 @@ python main.py
 4. Quality defaults to **Max** (100%) — lower the slider only if you want a smaller file
 5. Hit **Convert** — results never overwrite existing files
 
-### Size estimates
+### CLI
+
+```bash
+# Smart-guess convert
+converter photo.heic
+
+# Explicit format
+converter photo.heic -f jpg
+converter clip.mov -f mp4 -q 85
+converter song.wav -f mp3 -o ~/Desktop/out
+
+# Compress presets (light | balanced | small)
+converter compress shot.png -p small
+converter compress video.mov -p balanced -o ~/Desktop
+
+# List formats
+converter --formats
+converter --help
+```
+
+| Flag | Meaning |
+|------|---------|
+| `-f`, `--format` | Output format (default: smart guess) |
+| `-q`, `--quality` | Quality 1–100 (default: 100) |
+| `-o`, `--output` | Output directory |
+| `--max-dim` | Cap longest side in pixels |
+| `-p`, `--preset` | Compress: `light`, `balanced`, `small` |
+| `-v`, `--verbose` | Engine progress |
+
+Directories are expanded to supported media files inside them.
+
+## How it works
+
+### Size estimates (GUI)
 
 As you change **format**, **quality**, or **compress preset**, each file shows an
 estimated output size (e.g. `≈ 1.2 MB  (−64%)`) and a batch strip totals the delta.
@@ -51,7 +98,8 @@ are approximate, not a dry-run encode.
 
 ### Compress mode
 
-Switch to **Compress** to shrink files without hunting for a format:
+Switch to **Compress** (GUI) or use `converter compress` to shrink files without
+hunting for a format:
 
 | Preset | Quality | Max dimension | Notes |
 |--------|---------|---------------|-------|
@@ -78,15 +126,26 @@ Successful conversions are remembered so the next HEIC batch prefers whatever *y
 converter/
   engine.py    # Pillow + ffmpeg conversion
   guesser.py   # format prediction + learning
+  estimate.py  # size estimates
   app.py       # Tk GUI
+  cli.py       # command-line interface
 main.py
 run.sh
+Converter.command   # macOS double-click launcher
+install.sh          # curl | bash installer
 ```
 
-## Shortcuts
+## Shortcuts (GUI)
 
 | Key | Action |
 |-----|--------|
 | ⌘O | Browse files |
 | ⌘↩ | Convert |
 | ⌘⌫ | Clear queue |
+
+## Uninstall
+
+```bash
+rm -rf ~/.local/share/converter ~/.local/bin/converter
+rm -f ~/Applications/Converter.command   # macOS
+```
